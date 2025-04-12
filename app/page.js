@@ -24,6 +24,9 @@ export default function PdfOcr() {
   const [pdfDocument, setPdfDocument] = useState(null);
   const [pageTexts, setPageTexts] = useState({});
   const [collapsedPages, setCollapsedPages] = useState({});
+  const [progress, setProgress] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
   useEffect(() => {
     const handleFileChange = async (e) => {
@@ -38,6 +41,7 @@ export default function PdfOcr() {
       setLoading(false);
       setPageTexts({});
       setCollapsedPages({});
+      setProgress(0);
     };
 
     const input = document.getElementById("pdfUpload");
@@ -61,7 +65,12 @@ export default function PdfOcr() {
         await page.render({ canvasContext: ctx, viewport }).promise;
 
         const result = await recognize(canvas, "fas", {
-          logger: (m) => console.log(m),
+          logger: (m) => {
+            console.log(m);
+            if (m.status === "recognizing text") {
+              setProgress(m.progress * 100);
+            }
+          },
         });
 
         let text = result.data.text.trim();
@@ -75,6 +84,7 @@ export default function PdfOcr() {
         }));
       } finally {
         setLoading(false);
+        setProgress(0);
       }
     };
 
@@ -116,6 +126,35 @@ export default function PdfOcr() {
     URL.revokeObjectURL(url);
   };
 
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+
+    if (term) {
+      const results = Object.entries(pageTexts).reduce((acc, [page, text]) => {
+        const cleanedText = text
+          ? text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+          : "";
+        const regex = new RegExp(term, "gi");
+        const matches = [...(text?.matchAll(regex) || [])];
+
+        if (matches.length) {
+          acc.push({
+            page,
+            matches: matches.map((match) => ({
+              index: match.index,
+              text: match[0],
+            })),
+          });
+        }
+        return acc;
+      }, []);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 bg-gray-800 text-white">
       <div className="max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden bg-gray-900">
@@ -135,11 +174,55 @@ export default function PdfOcr() {
             />
           </div>
           {loading && (
-            <p className="mt-3 text-blue-400">
-              ⏳ Processing page {currentPage}...
-            </p>
+            <>
+              <p className="mt-3 text-blue-400">
+                ⏳ Processing page {currentPage}...
+              </p>
+              <progress value={progress} max="100" />
+            </>
           )}
           <canvas ref={canvasRef} style={{ display: "none" }} />
+
+          <div className="mt-5">
+            <input
+              type="text"
+              placeholder="Search inside extracted text..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
+            />
+          </div>
+
+          {searchResults.length > 0 && (
+            <div className="mt-5">
+              <h3 className="text-lg font-medium text-gray-100">
+                Search Results
+              </h3>
+              {searchResults.map((result) => (
+                <div
+                  key={`${result.page}-${result.matches[0].index}`}
+                  className="mt-2 border border-gray-600 rounded p-4"
+                >
+                  <h4 className="text-md font-semibold text-gray-100">
+                    Page {result.page}
+                  </h4>
+                  <ul>
+                    {result.matches.map((match) => (
+                      <li key={match.index}>
+                        {pageTexts[result.page]?.substring(0, match.index)}
+                        <span className="bg-yellow-500 text-gray-900">
+                          {match.text}
+                        </span>
+                        {pageTexts[result.page]?.substring(
+                          match.index + match.text.length
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
 
           {Object.entries(pageTexts).map(([page, text]) => (
             <div key={page} className="mt-5 border border-gray-600 rounded p-4">
