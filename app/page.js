@@ -47,7 +47,7 @@ export default function PdfOcr() {
 
   useEffect(() => {
     const extractTextFromPage = async () => {
-      if (!pdfDocument || pageTexts[currentPage]) return;
+      if (!pdfDocument) return;
 
       setLoading(true);
       const canvas = canvasRef.current;
@@ -97,6 +97,23 @@ export default function PdfOcr() {
 
   const toggleCollapse = (page) => {
     setCollapsedPages((prev) => ({ ...prev, [page]: !prev[page] }));
+  };
+
+  const downloadOcrResult = () => {
+    let allText = "";
+    for (const page in pageTexts) {
+      allText += `Page ${page}:\n${pageTexts[page]}\n\n`;
+    }
+
+    const blob = new Blob([allText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ocr_result.txt";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -167,6 +184,12 @@ export default function PdfOcr() {
               Next
             </button>
           </div>
+          <button
+            onClick={downloadOcrResult}
+            className="mt-5 bg-blue-700 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+          >
+            Download OCR Result as .txt
+          </button>
         </div>
       </div>
     </div>
