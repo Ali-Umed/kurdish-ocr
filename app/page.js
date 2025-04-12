@@ -1,9 +1,19 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf";
+import * as pdfjsLib from "pdfjs-dist";
 import { recognize } from "tesseract.js";
-
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+const fixKurdishText = (text) => {
+  text = text
+    .replace(/(?<=\s|^)(ب)(?=\s|$)/g, "پ")
+    .replace(/(?<=[ەوڕکگچجپڵڤەیئ ])و(?=[ەوڕکگچجپڵڤەیئ ])/g, "ۆ")
+    .replace(/ى/g, "ێ")
+    .replace(
+      /(?<=[بپتجچخدذرزسشعغفڤقکگلڵمنهەؤءئ])ی(?=[\s.,؛،!؟\u200c]|$)/g,
+      "ێ"
+    );
+  return text;
+};
 
 export default function PdfOcr() {
   const canvasRef = useRef(null);
@@ -26,7 +36,7 @@ export default function PdfOcr() {
     };
 
     const input = document.getElementById("pdfUpload");
-    if (input) input.addEventListener("change", handleFileChange);
+    if (input) input?.addEventListener("change", handleFileChange);
     return () => input?.removeEventListener("change", handleFileChange);
   }, []);
 
@@ -50,13 +60,7 @@ export default function PdfOcr() {
         });
 
         let text = result.data.text.trim();
-        text = text
-          .replace(/ى/g, "ی")
-          .replace(/ي/g, "ی")
-          .replace(/ك/g, "ک")
-          .replace(/ە/g, "ە")
-          .replace(/ئ/g, "ئ")
-          .replace(/ؤ/g, "ۆ");
+        text = fixKurdishText(text);
 
         setOutput(
           `<h3>📄 Page ${currentPage}</h3><pre dir="rtl">${text}</pre>`
