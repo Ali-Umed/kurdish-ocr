@@ -12,11 +12,11 @@ export default function NavigationButtons({
       <button
         onClick={goToPreviousPage}
         disabled={currentPage <= 1 || loading}
-        className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white transition-colors duration-300"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors duration-300"
       >
         Previous
       </button>
-      <p className="text-gray-900 dark:text-gray-100 transition-colors duration-300">
+      <p className="text-gray-700 dark:text-gray-300 transition-colors duration-300">
         Page {currentPage} / {pdfDocument?.numPages || 0}
       </p>
       <button
@@ -24,7 +24,7 @@ export default function NavigationButtons({
         disabled={
           !pdfDocument || currentPage >= pdfDocument.numPages || loading
         }
-        className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white transition-colors duration-300"
+        className="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors duration-300"
       >
         Next
       </button>

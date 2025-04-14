@@ -2,8 +2,6 @@
 
 A Next.js project for extracting Kurdish Sorani text from PDF files and images. Built with Tesseract.js and PDF.js.
 
-![Kurdish OCR Screenshot](link-to-your-screenshot-here)
-
 ## ✨ Features
 
 - **PDF OCR:** Extract text from PDF documents.
@@ -62,4 +60,4 @@ Contributions are welcome! If you have any ideas, suggestions, or bug reports, p
 
 ---
 
-Made with ❤️ by [Your Name]
+Made with ❤️ by [Ali Umed]
