@@ -79,28 +79,28 @@ export default function PageDisplay({
   return (
     <div
       key={page}
-      className="mt-5 border border-gray-300 rounded p-4 dark:border-gray-500 transition-colors duration-300"
+      className="mt-5 border border-gray-200 rounded-md p-4 transition-colors duration-300 dark:border-gray-700"
     >
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-300">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-300">
           Page {page}
         </h3>
         <div>
           <button
             onClick={handleCopyToClipboard}
-            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300 mr-2"
+            className="text-sm text-gray-600 hover:text-blue-500 focus:outline-none transition-colors duration-300 mr-2"
           >
             Copy
           </button>
           <button
             onClick={handleDownloadText}
-            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300 mr-2"
+            className="text-sm text-gray-600 hover:text-blue-500 focus:outline-none transition-colors duration-300 mr-2"
           >
             Download
           </button>
           <button
             onClick={() => toggleCollapse(page)}
-            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300"
+            className="text-sm text-gray-600 hover:text-blue-500 focus:outline-none transition-colors duration-300"
           >
             {collapsedPages[page] ? "Expand" : "Collapse"}
           </button>
@@ -119,13 +119,12 @@ export default function PageDisplay({
             value={text}
             onChange={(e) => handleTextChange(page, e.target.value)}
             rows="5"
-            className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-200 border-gray-300 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white leading-tight focus:outline-none focus:shadow-outline transition-colors duration-300 absolute top-0 left-0"
+            className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md transition-colors duration-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white absolute top-0 left-0 resize-none"
             style={{
               transformOrigin: "0 0",
               transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
               width: "100%",
               height: "100%",
-              resize: "none",
             }}
           />
         </div>

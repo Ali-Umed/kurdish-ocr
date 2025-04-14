@@ -224,11 +224,11 @@ export default function PdfOcr() {
   };
 
   return (
-    <div className="container mx-auto p-4 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+    <div className="container mx-auto p-4 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
       <DarkModeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-      <div className="max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
+      <div className="max-w-3xl mx-auto shadow-lg rounded-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-300">
             Kurdish Sorani PDF OCR
           </h2>
           <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-300 transition-colors duration-300">
@@ -241,7 +241,7 @@ export default function PdfOcr() {
               <p className="mt-3 text-blue-600 dark:text-blue-400 transition-colors duration-300">
                 ⏳ Processing page {currentPage}...
               </p>
-              <progress value={progress} max="100" />
+              <progress value={progress} max="100" className="w-full" />
             </>
           )}
           <canvas ref={canvasRef} style={{ display: "none" }} />
@@ -270,7 +270,7 @@ export default function PdfOcr() {
           />
           <button
             onClick={downloadOcrResult}
-            className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-700 dark:hover:bg-blue-500 dark:text-white transition-colors duration-300"
+            className="mt-5 bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300"
           >
             Download OCR Result as .txt
           </button>
