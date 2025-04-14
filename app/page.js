@@ -9,6 +9,7 @@ import SearchResults from "./components/SearchResults";
 import PageDisplay from "./components/PageDisplay";
 import NavigationButtons from "./components/NavigationButtons";
 import ImageUploader from "./components/ImageUploader";
+import FeatureStatus from "./components/FeatureStatus";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
@@ -225,6 +226,7 @@ export default function PdfOcr() {
 
   return (
     <div className="container mx-auto p-4 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+      <FeatureStatus />
       <DarkModeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
       <div className="max-w-3xl mx-auto shadow-lg rounded-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
         <div className="px-4 py-5 sm:p-6">
