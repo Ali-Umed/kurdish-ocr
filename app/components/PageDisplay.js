@@ -60,6 +60,10 @@ export default function PageDisplay({
     textarea.style.transform = `scale(${scale}) translate(${position.x}px, ${position.y}px)`;
   }, [scale, position]);
 
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div
       key={page}
@@ -69,12 +73,20 @@ export default function PageDisplay({
         <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-300">
           Page {page}
         </h3>
-        <button
-          onClick={() => toggleCollapse(page)}
-          className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300"
-        >
-          {collapsedPages[page] ? "Expand" : "Collapse"}
-        </button>
+        <div>
+          <button
+            onClick={handleCopyToClipboard}
+            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300 mr-2"
+          >
+            Copy
+          </button>
+          <button
+            onClick={() => toggleCollapse(page)}
+            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300"
+          >
+            {collapsedPages[page] ? "Expand" : "Collapse"}
+          </button>
+        </div>
       </div>
       {!collapsedPages[page] && (
         <div
