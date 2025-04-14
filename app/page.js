@@ -2,8 +2,9 @@
 import { useEffect, useState, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { recognize } from "tesseract.js";
+import { FaMoon, FaSun } from "react-icons/fa";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js`;
 
 const fixKurdishText = (text) => {
   text = text
@@ -27,6 +28,17 @@ export default function PdfOcr() {
   const [progress, setProgress] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    const storedDarkMode = localStorage.getItem("darkMode") === "true";
+    setDarkMode(storedDarkMode);
+    if (storedDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
 
   useEffect(() => {
     const handleFileChange = async (e) => {
@@ -155,14 +167,36 @@ export default function PdfOcr() {
     }
   };
 
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem("darkMode", newDarkMode.toString());
+
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4 bg-gray-800 text-white">
-      <div className="max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden bg-gray-900">
+    <div className="container mx-auto p-4 bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+      <button
+        onClick={toggleDarkMode}
+        className="absolute top-4 right-4 rounded-full p-2 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-500"
+      >
+        {darkMode ? (
+          <FaSun className="text-gray-800 dark:text-yellow-500" />
+        ) : (
+          <FaMoon className="text-gray-800 dark:text-gray-200" />
+        )}
+      </button>
+      <div className="max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-lg font-medium text-gray-100">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300">
             Kurdish Sorani PDF OCR
           </h2>
-          <div className="mt-2 max-w-xl text-sm text-gray-300">
+          <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-300 transition-colors duration-300">
             <p>Upload a PDF file to extract Kurdish Sorani text.</p>
           </div>
           <div className="mt-5">
@@ -170,12 +204,12 @@ export default function PdfOcr() {
               type="file"
               id="pdfUpload"
               accept=".pdf"
-              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-200 border-gray-300 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white leading-tight focus:outline-none focus:shadow-outline transition-colors duration-300"
             />
           </div>
           {loading && (
             <>
-              <p className="mt-3 text-blue-400">
+              <p className="mt-3 text-blue-600 dark:text-blue-400 transition-colors duration-300">
                 ⏳ Processing page {currentPage}...
               </p>
               <progress value={progress} max="100" />
@@ -189,28 +223,28 @@ export default function PdfOcr() {
               placeholder="Search inside extracted text..."
               value={searchTerm}
               onChange={handleSearch}
-              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
+              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-200 border-gray-300 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white leading-tight focus:outline-none focus:shadow-outline transition-colors duration-300"
             />
           </div>
 
           {searchResults.length > 0 && (
             <div className="mt-5">
-              <h3 className="text-lg font-medium text-gray-100">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 transition-colors duration-300">
                 Search Results
               </h3>
               {searchResults.map((result) => (
                 <div
                   key={`${result.page}-${result.matches[0].index}`}
-                  className="mt-2 border border-gray-600 rounded p-4"
+                  className="mt-2 border border-gray-300 rounded p-4 dark:border-gray-500 transition-colors duration-300"
                 >
-                  <h4 className="text-md font-semibold text-gray-100">
+                  <h4 className="text-md font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-300">
                     Page {result.page}
                   </h4>
                   <ul>
                     {result.matches.map((match) => (
                       <li key={match.index}>
                         {pageTexts[result.page]?.substring(0, match.index)}
-                        <span className="bg-yellow-500 text-gray-900">
+                        <span className="bg-yellow-200 text-gray-900 dark:bg-yellow-500 dark:text-white transition-colors duration-300">
                           {match.text}
                         </span>
                         {pageTexts[result.page]?.substring(
@@ -225,12 +259,17 @@ export default function PdfOcr() {
           )}
 
           {Object.entries(pageTexts).map(([page, text]) => (
-            <div key={page} className="mt-5 border border-gray-600 rounded p-4">
+            <div
+              key={page}
+              className="mt-5 border border-gray-300 rounded p-4 dark:border-gray-500 transition-colors duration-300"
+            >
               <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-bold text-gray-100">Page {page}</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 transition-colors duration-300">
+                  Page {page}
+                </h3>
                 <button
                   onClick={() => toggleCollapse(page)}
-                  className="text-sm text-gray-400 hover:text-gray-300 focus:outline-none"
+                  className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300"
                 >
                   {collapsedPages[page] ? "Expand" : "Collapse"}
                 </button>
@@ -240,7 +279,7 @@ export default function PdfOcr() {
                   value={text}
                   onChange={(e) => handleTextChange(page, e.target.value)}
                   rows="5"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-200 border-gray-300 text-gray-700 dark:bg-gray-700 dark:border-gray-600 dark:text-white leading-tight focus:outline-none focus:shadow-outline transition-colors duration-300"
                 />
               )}
             </div>
@@ -250,11 +289,11 @@ export default function PdfOcr() {
             <button
               onClick={goToPreviousPage}
               disabled={currentPage <= 1 || loading}
-              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-600 hover:bg-gray-500 text-white"
+              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white transition-colors duration-300"
             >
               Previous
             </button>
-            <p className="text-white">
+            <p className="text-gray-900 dark:text-gray-100 transition-colors duration-300">
               Page {currentPage} / {pdfDocument?.numPages || 0}
             </p>
             <button
@@ -262,14 +301,14 @@ export default function PdfOcr() {
               disabled={
                 !pdfDocument || currentPage >= pdfDocument.numPages || loading
               }
-              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-600 hover:bg-gray-500 text-white"
+              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-white transition-colors duration-300"
             >
               Next
             </button>
           </div>
           <button
             onClick={downloadOcrResult}
-            className="mt-5 bg-blue-700 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="mt-5 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-700 dark:hover:bg-blue-500 dark:text-white transition-colors duration-300"
           >
             Download OCR Result as .txt
           </button>
