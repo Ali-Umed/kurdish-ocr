@@ -8,6 +8,7 @@ import SearchBar from "./components/SearchBar";
 import SearchResults from "./components/SearchResults";
 import PageDisplay from "./components/PageDisplay";
 import NavigationButtons from "./components/NavigationButtons";
+import ImageUploader from "./components/ImageUploader";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
@@ -34,6 +35,7 @@ export default function PdfOcr() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [darkMode, setDarkMode] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     const storedDarkMode = localStorage.getItem("darkMode") === "true";
@@ -58,6 +60,49 @@ export default function PdfOcr() {
     setPageTexts({});
     setCollapsedPages({});
     setProgress(0);
+  };
+
+  const handleImageChange = async (e) => {
+    setLoading(true);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImageFile(file);
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = async () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      try {
+        const result = await recognize(canvas, "fas", {
+          logger: (m) => {
+            console.log(m);
+            if (m.status === "recognizing text") {
+              setProgress(m.progress * 100);
+            }
+          },
+        });
+
+        let text = result.data.text.trim();
+        text = fixKurdishText(text);
+        setPageTexts({ image: text });
+      } catch (error) {
+        console.error("Error during OCR:", error);
+        setPageTexts({ image: "❌ Error during OCR. Check console." });
+      } finally {
+        setLoading(false);
+        setProgress(0);
+        setPdfDocument(null);
+        setCurrentPage(1);
+      }
+    };
+
+    img.src = URL.createObjectURL(file);
   };
 
   useEffect(() => {
@@ -187,9 +232,10 @@ export default function PdfOcr() {
             Kurdish Sorani PDF OCR
           </h2>
           <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-300 transition-colors duration-300">
-            <p>Upload a PDF file to extract Kurdish Sorani text.</p>
+            <p>Upload a PDF file or an image to extract Kurdish Sorani text.</p>
           </div>
           <PdfUploader onFileChange={handleFileChange} />
+          <ImageUploader onImageChange={handleImageChange} />
           {loading && (
             <>
               <p className="mt-3 text-blue-600 dark:text-blue-400 transition-colors duration-300">

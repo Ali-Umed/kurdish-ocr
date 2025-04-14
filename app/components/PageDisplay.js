@@ -64,6 +64,18 @@ export default function PageDisplay({
     navigator.clipboard.writeText(text);
   };
 
+  const handleDownloadText = () => {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `page_${page}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div
       key={page}
@@ -79,6 +91,12 @@ export default function PageDisplay({
             className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300 mr-2"
           >
             Copy
+          </button>
+          <button
+            onClick={handleDownloadText}
+            className="text-sm text-gray-600 hover:text-gray-500 focus:outline-none dark:text-gray-400 dark:hover:text-gray-300 transition-colors duration-300 mr-2"
+          >
+            Download
           </button>
           <button
             onClick={() => toggleCollapse(page)}
