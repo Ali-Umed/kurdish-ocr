@@ -2,6 +2,14 @@
 import { useEffect, useState, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { recognize } from "tesseract.js";
+import DarkModeToggle from "./components/DarkModeToggle";
+import PdfUploader from "./components/PdfUploader";
+import SearchBar from "./components/SearchBar";
+import SearchResults from "./components/SearchResults";
+import PageDisplay from "./components/PageDisplay";
+import NavigationButtons from "./components/NavigationButtons";
+import ImageUploader from "./components/ImageUploader";
+import FeatureStatus from "./components/FeatureStatus";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
@@ -24,26 +32,79 @@ export default function PdfOcr() {
   const [pdfDocument, setPdfDocument] = useState(null);
   const [pageTexts, setPageTexts] = useState({});
   const [collapsedPages, setCollapsedPages] = useState({});
+  const [progress, setProgress] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [darkMode, setDarkMode] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
-    const handleFileChange = async (e) => {
-      setLoading(true);
-      const file = e.target.files[0];
-      if (!file) return;
+    const storedDarkMode = localStorage.getItem("darkMode") === "true";
+    setDarkMode(storedDarkMode);
+    if (storedDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
 
-      const pdfData = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-      setPdfDocument(pdf);
-      setCurrentPage(1);
-      setLoading(false);
-      setPageTexts({});
-      setCollapsedPages({});
+  const handleFileChange = async (e) => {
+    setLoading(true);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const pdfData = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+    setPdfDocument(pdf);
+    setCurrentPage(1);
+    setLoading(false);
+    setPageTexts({});
+    setCollapsedPages({});
+    setProgress(0);
+  };
+
+  const handleImageChange = async (e) => {
+    setLoading(true);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImageFile(file);
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+
+    img.onload = async () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      try {
+        const result = await recognize(canvas, "fas", {
+          logger: (m) => {
+            console.log(m);
+            if (m.status === "recognizing text") {
+              setProgress(m.progress * 100);
+            }
+          },
+        });
+
+        let text = result.data.text.trim();
+        text = fixKurdishText(text);
+        setPageTexts({ image: text });
+      } catch (error) {
+        console.error("Error during OCR:", error);
+        setPageTexts({ image: "❌ Error during OCR. Check console." });
+      } finally {
+        setLoading(false);
+        setProgress(0);
+        setPdfDocument(null);
+        setCurrentPage(1);
+      }
     };
 
-    const input = document.getElementById("pdfUpload");
-    if (input) input?.addEventListener("change", handleFileChange);
-    return () => input?.removeEventListener("change", handleFileChange);
-  }, []);
+    img.src = URL.createObjectURL(file);
+  };
 
   useEffect(() => {
     const extractTextFromPage = async () => {
@@ -61,7 +122,12 @@ export default function PdfOcr() {
         await page.render({ canvasContext: ctx, viewport }).promise;
 
         const result = await recognize(canvas, "fas", {
-          logger: (m) => console.log(m),
+          logger: (m) => {
+            console.log(m);
+            if (m.status === "recognizing text") {
+              setProgress(m.progress * 100);
+            }
+          },
         });
 
         let text = result.data.text.trim();
@@ -75,6 +141,7 @@ export default function PdfOcr() {
         }));
       } finally {
         setLoading(false);
+        setProgress(0);
       }
     };
 
@@ -116,77 +183,96 @@ export default function PdfOcr() {
     URL.revokeObjectURL(url);
   };
 
+  const handleSearch = (e) => {
+    const term = e.target.value;
+    setSearchTerm(term);
+
+    if (term) {
+      const results = Object.entries(pageTexts).reduce((acc, [page, text]) => {
+        const cleanedText = text
+          ? text.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")
+          : "";
+        const regex = new RegExp(term, "gi");
+        const matches = [...(text?.matchAll(regex) || [])];
+
+        if (matches.length) {
+          acc.push({
+            page,
+            matches: matches.map((match) => ({
+              index: match.index,
+              text: match[0],
+            })),
+          });
+        }
+        return acc;
+      }, []);
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem("darkMode", newDarkMode.toString());
+
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4 bg-gray-800 text-white">
-      <div className="max-w-3xl mx-auto shadow-lg rounded-lg overflow-hidden bg-gray-900">
+    <div className="container mx-auto p-4 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-300">
+      <FeatureStatus />
+      <DarkModeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+      <div className="max-w-3xl mx-auto shadow-lg rounded-md overflow-hidden bg-white dark:bg-gray-800 transition-colors duration-300">
         <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-lg font-medium text-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 transition-colors duration-300">
             Kurdish Sorani PDF OCR
           </h2>
-          <div className="mt-2 max-w-xl text-sm text-gray-300">
-            <p>Upload a PDF file to extract Kurdish Sorani text.</p>
+          <div className="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-300 transition-colors duration-300">
+            <p>Upload a PDF file or an image to extract Kurdish Sorani text.</p>
           </div>
-          <div className="mt-5">
-            <input
-              type="file"
-              id="pdfUpload"
-              accept=".pdf"
-              className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
+          <PdfUploader onFileChange={handleFileChange} />
+          <ImageUploader onImageChange={handleImageChange} />
           {loading && (
-            <p className="mt-3 text-blue-400">
-              ⏳ Processing page {currentPage}...
-            </p>
+            <>
+              <p className="mt-3 text-blue-600 dark:text-blue-400 transition-colors duration-300">
+                ⏳ Processing page {currentPage}...
+              </p>
+              <progress value={progress} max="100" className="w-full" />
+            </>
           )}
           <canvas ref={canvasRef} style={{ display: "none" }} />
 
+          <SearchBar searchTerm={searchTerm} handleSearch={handleSearch} />
+
+          <SearchResults searchResults={searchResults} pageTexts={pageTexts} />
+
           {Object.entries(pageTexts).map(([page, text]) => (
-            <div key={page} className="mt-5 border border-gray-600 rounded p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="text-xl font-bold text-gray-100">Page {page}</h3>
-                <button
-                  onClick={() => toggleCollapse(page)}
-                  className="text-sm text-gray-400 hover:text-gray-300 focus:outline-none"
-                >
-                  {collapsedPages[page] ? "Expand" : "Collapse"}
-                </button>
-              </div>
-              {!collapsedPages[page] && (
-                <textarea
-                  value={text}
-                  onChange={(e) => handleTextChange(page, e.target.value)}
-                  rows="5"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 bg-gray-700 border-gray-600 text-white leading-tight focus:outline-none focus:shadow-outline"
-                />
-              )}
-            </div>
+            <PageDisplay
+              key={page}
+              page={page}
+              text={text}
+              collapsedPages={collapsedPages}
+              toggleCollapse={toggleCollapse}
+              handleTextChange={handleTextChange}
+            />
           ))}
 
-          <div className="mt-5 flex justify-between">
-            <button
-              onClick={goToPreviousPage}
-              disabled={currentPage <= 1 || loading}
-              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-600 hover:bg-gray-500 text-white"
-            >
-              Previous
-            </button>
-            <p className="text-white">
-              Page {currentPage} / {pdfDocument?.numPages || 0}
-            </p>
-            <button
-              onClick={goToNextPage}
-              disabled={
-                !pdfDocument || currentPage >= pdfDocument.numPages || loading
-              }
-              className="font-bold py-2 px-4 rounded disabled:opacity-50 focus:outline-none focus:shadow-outline bg-gray-600 hover:bg-gray-500 text-white"
-            >
-              Next
-            </button>
-          </div>
+          <NavigationButtons
+            currentPage={currentPage}
+            pdfDocument={pdfDocument}
+            goToPreviousPage={goToPreviousPage}
+            goToNextPage={goToNextPage}
+            loading={loading}
+          />
           <button
             onClick={downloadOcrResult}
-            className="mt-5 bg-blue-700 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="mt-5 bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-300"
           >
             Download OCR Result as .txt
           </button>
